@@ -94,6 +94,17 @@ final class AppModel: ObservableObject {
             .max { played[$0.id]! < played[$1.id]! }
     }
 
+    /// "2h 15m played", "No time tracked yet" for games played before tracking, "Not played yet".
+    func playTimeText(for game: Game) -> String {
+        guard let stats = library.stats[game.id] else { return "Not played yet" }
+        guard stats.seconds > 0 else { return "No time tracked yet" }
+        let minutes = Int(stats.seconds / 60)
+        if minutes < 1 { return "Under a minute played" }
+        let hours = minutes / 60, rest = minutes % 60
+        let text = hours == 0 ? "\(rest)m" : rest == 0 ? "\(hours)h" : "\(hours)h \(rest)m"
+        return "\(text) played"
+    }
+
     func count(for filter: SystemFilter) -> Int {
         switch filter {
         case .all: library.games.count
@@ -105,9 +116,9 @@ final class AppModel: ObservableObject {
 
     func play(_ game: Game) {
         selectedID = game.id
-        launcher.launch(game, fullScreen: launchFullScreen) { [weak self] in
-            self?.library.markPlayed(game)
-        }
+        launcher.launch(game, fullScreen: launchFullScreen,
+                        onStarted: { [weak self] in self?.library.markPlayed(game) },
+                        onEnded: { [weak self] seconds in self?.library.addPlayTime(seconds, to: game) })
     }
 
     func playSelected() {

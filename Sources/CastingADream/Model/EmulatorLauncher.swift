@@ -10,16 +10,25 @@ final class EmulatorLauncher: ObservableObject {
     private var runningApp: NSRunningApplication?
     private var terminationObserver: NSObjectProtocol?
     private var quitObserver: NSObjectProtocol?
+    /// System uptime when the emulator started. Uptime stops while the Mac sleeps,
+    /// so a game left open overnight doesn't count the night.
+    private var sessionStart: TimeInterval?
+    private var onSessionEnded: ((TimeInterval) -> Void)?
 
     /// How long Stop Game waits for the emulator to quit on its own before forcing it.
     private static let stopTimeout: TimeInterval = 5
 
     init() {
         // Quitting the launcher also quits the game it started, so nothing keeps running unseen.
+        // The session is recorded now: the launcher won't be around to see the emulator quit.
         quitObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.willTerminateNotification, object: nil, queue: .main
         ) { [weak self] _ in
-            MainActor.assumeIsolated { _ = self?.runningApp?.terminate() }
+            MainActor.assumeIsolated {
+                guard let self, let app = self.runningApp else { return }
+                self.endSession()
+                app.terminate()
+            }
         }
     }
 
@@ -34,7 +43,9 @@ final class EmulatorLauncher: ObservableObject {
             ?? copies.first
     }
 
-    func launch(_ game: Game, fullScreen: Bool, onStarted: @escaping () -> Void) {
+    /// `onStarted` runs once the emulator is up; `onEnded` gets the session's play time when it quits.
+    func launch(_ game: Game, fullScreen: Bool,
+                onStarted: @escaping () -> Void, onEnded: @escaping (TimeInterval) -> Void) {
         if running != nil {
             showRunningGame()
             return
@@ -67,8 +78,10 @@ final class EmulatorLauncher: ObservableObject {
                     self.errorMessage = "\(game.title) couldn't be started: \(error?.localizedDescription ?? "unknown error")."
                     return
                 }
-                self.track(app)
+                self.sessionStart = ProcessInfo.processInfo.systemUptime
+                self.onSessionEnded = onEnded
                 onStarted()
+                self.track(app)
             }
         }
     }
@@ -106,7 +119,17 @@ final class EmulatorLauncher: ObservableObject {
         }
     }
 
+    /// Reports the play time once per session.
+    private func endSession() {
+        guard let start = sessionStart else { return }
+        sessionStart = nil
+        let callback = onSessionEnded
+        onSessionEnded = nil
+        callback?(ProcessInfo.processInfo.systemUptime - start)
+    }
+
     private func emulatorDidQuit() {
+        endSession()
         if let terminationObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(terminationObserver)
         }

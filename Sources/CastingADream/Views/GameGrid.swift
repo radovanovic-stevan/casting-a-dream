@@ -74,6 +74,11 @@ struct GameCard: View {
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
 
+            Label(model.playTimeText(for: game), systemImage: "clock")
+                .font(.system(size: 11))
+                .foregroundStyle(Theme.textSecondary)
+                .lineLimit(1)
+
             HStack(spacing: 5) {
                 SystemChip(system: game.system)
                 Spacer(minLength: 4)
@@ -195,7 +200,7 @@ struct HeroBanner: View {
                 HStack(spacing: 8) {
                     SystemChip(system: game.system)
                     if let date = model.library.lastPlayed[game.id] {
-                        Text("Played \(date.formatted(.relative(presentation: .named)))")
+                        Text("Played \(date.formatted(.relative(presentation: .named))) · \(model.playTimeText(for: game))")
                             .font(.system(size: 11.5))
                             .foregroundStyle(Theme.textSecondary)
                     }

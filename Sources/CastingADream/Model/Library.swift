@@ -1,18 +1,26 @@
 import AppKit
 
-/// Games found in ~/Games/<System>, plus when each was last played.
+/// When a game was last played and for how long in total.
+struct PlayStats: Codable, Equatable {
+    var lastPlayed: Date
+    var seconds: TimeInterval = 0
+}
+
+/// Games found in ~/Games/<System>, plus play history per game.
 @MainActor
 final class Library: ObservableObject {
     @Published private(set) var games: [Game] = []
-    @Published private(set) var lastPlayed: [String: Date] = [:]
+    @Published private(set) var stats: [String: PlayStats] = [:]
     @Published private(set) var hasScanned = false
+
+    var lastPlayed: [String: Date] { stats.mapValues(\.lastPlayed) }
 
     nonisolated static let gamesRoot = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Games")
 
     private var scanTask: Task<Void, Never>?
 
     init() {
-        lastPlayed = Self.loadRecents()
+        stats = Self.loadStats()
     }
 
     nonisolated static func folder(for system: GameSystem) -> URL {
@@ -32,8 +40,14 @@ final class Library: ObservableObject {
     }
 
     func markPlayed(_ game: Game) {
-        lastPlayed[game.id] = Date()
-        Self.saveRecents(lastPlayed)
+        stats[game.id, default: PlayStats(lastPlayed: Date())].lastPlayed = Date()
+        Self.saveStats(stats)
+    }
+
+    func addPlayTime(_ seconds: TimeInterval, to game: Game) {
+        guard seconds > 0 else { return }
+        stats[game.id, default: PlayStats(lastPlayed: Date())].seconds += seconds
+        Self.saveStats(stats)
     }
 
     func openFolder(_ system: GameSystem) {
@@ -75,26 +89,33 @@ final class Library: ObservableObject {
         return nil
     }
 
-    // MARK: - Recently played
+    // MARK: - Play history
 
-    private static var recentsURL: URL {
-        AppPaths.support.appendingPathComponent("recents.json")
-    }
+    private static var statsURL: URL { AppPaths.support.appendingPathComponent("stats.json") }
+    /// Before play time was tracked, only last-played dates were kept here.
+    private static var legacyRecentsURL: URL { AppPaths.support.appendingPathComponent("recents.json") }
 
-    private static func loadRecents() -> [String: Date] {
-        guard let data = try? Data(contentsOf: recentsURL) else { return [:] }
+    private static func loadStats() -> [String: PlayStats] {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        return (try? decoder.decode([String: Date].self, from: data)) ?? [:]
+        if let data = try? Data(contentsOf: statsURL) {
+            return (try? decoder.decode([String: PlayStats].self, from: data)) ?? [:]
+        }
+        guard let data = try? Data(contentsOf: legacyRecentsURL),
+              let recents = try? decoder.decode([String: Date].self, from: data) else { return [:] }
+        let migrated = recents.mapValues { PlayStats(lastPlayed: $0) }
+        saveStats(migrated)
+        try? FileManager.default.removeItem(at: legacyRecentsURL)
+        return migrated
     }
 
-    private static func saveRecents(_ recents: [String: Date]) {
+    private static func saveStats(_ stats: [String: PlayStats]) {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        guard let data = try? encoder.encode(recents) else { return }
+        guard let data = try? encoder.encode(stats) else { return }
         try? FileManager.default.createDirectory(at: AppPaths.support, withIntermediateDirectories: true)
-        try? data.write(to: recentsURL, options: .atomic)
+        try? data.write(to: statsURL, options: .atomic)
     }
 }
 
