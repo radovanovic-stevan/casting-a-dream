@@ -76,7 +76,8 @@ struct GameCard: View {
 
             HStack(spacing: 5) {
                 SystemChip(system: game.system)
-                ForEach(game.tags.prefix(1), id: \.self) { TagChip(text: $0) }
+                Spacer(minLength: 4)
+                CollectionLink(game: game)
             }
         }
         .frame(width: Theme.cardWidth, alignment: .leading)
@@ -88,9 +89,33 @@ struct GameCard: View {
         .animation(.easeOut(duration: 0.15), value: highlighted)
         .contextMenu {
             Button("Play") { model.play(game) }
+            Button("Open in My Collection") { NSWorkspace.shared.open(Collection.url(for: game)) }
             Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([game.url]) }
         }
         .help(game.name)
+    }
+}
+
+/// Small violet button that opens this game in collection.stevan.co.rs.
+struct CollectionLink: View {
+    let game: Game
+    @State private var hovering = false
+
+    var body: some View {
+        Button {
+            NSWorkspace.shared.open(Collection.url(for: game))
+        } label: {
+            Image(systemName: "square.stack.3d.up.fill")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 22, height: 18)
+                .background(hovering ? Theme.collectionHover : Theme.collection, in: Capsule())
+                .shadow(color: Theme.collection.opacity(hovering ? 0.6 : 0), radius: 6)
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .help("Open \(game.title) in My Collection")
     }
 }
 
@@ -169,7 +194,6 @@ struct HeroBanner: View {
                     .lineLimit(2)
                 HStack(spacing: 8) {
                     SystemChip(system: game.system)
-                    ForEach(game.tags, id: \.self) { TagChip(text: $0) }
                     if let date = model.library.lastPlayed[game.id] {
                         Text("Played \(date.formatted(.relative(presentation: .named)))")
                             .font(.system(size: 11.5))

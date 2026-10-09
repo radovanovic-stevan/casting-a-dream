@@ -19,6 +19,7 @@ The emulators are the regular, unmodified apps. They open as normal Mac apps wit
 - The library rescans whenever the launcher comes to the front, and with ⌘R.
 - Covers: a `cover.png`/`.jpg` (or `boxart`, `folder`) in the game's folder wins. Otherwise box art is downloaded once from [libretro-thumbnails](https://thumbnails.libretro.com) by Redump/No-Intro name and cached in `~/Library/Application Support/Casting a Dream/Covers`. Misses are retried after a week.
 - Play history is kept in `~/Library/Application Support/Casting a Dream/recents.json`.
+- Each game has a violet button (also in its right-click menu) that opens it in [my collection](https://collection.stevan.co.rs). The collection has no per-game pages, so the link is a search for the title plus a platform filter, e.g. `?q=Sonic%20Rivals&platforms=PSP`. The title comes from the folder name without the bracketed parts, so a folder name that differs from the collection's title won't find the game.
 
 ## Playing
 

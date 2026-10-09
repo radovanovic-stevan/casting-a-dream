@@ -69,19 +69,6 @@ struct SystemChip: View {
             .padding(.vertical, 2.5)
             .background(system.accent.opacity(0.12), in: Capsule())
             .overlay(Capsule().strokeBorder(system.accent.opacity(0.35), lineWidth: 0.5))
-    }
-}
-
-struct TagChip: View {
-    let text: String
-
-    var body: some View {
-        Text(text)
-            .font(.system(size: 10, weight: .medium))
-            .foregroundStyle(Theme.textSecondary)
-            .lineLimit(1)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2.5)
-            .background(Color.white.opacity(0.06), in: Capsule())
+            .fixedSize()
     }
 }

@@ -18,15 +18,6 @@ struct Game: Identifiable, Hashable {
         return stripped.isEmpty ? name : stripped
     }
 
-    /// Contents of the "(...)" groups: ["English"], ["USA"], ["Japan", "Disc 1"].
-    var tags: [String] {
-        let regex = try! NSRegularExpression(pattern: #"\(([^\)]*)\)"#)
-        let range = NSRange(name.startIndex..., in: name)
-        return regex.matches(in: name, range: range).compactMap { match in
-            Range(match.range(at: 1), in: name).map { String(name[$0]) }
-        }
-    }
-
     /// Names to try on thumbnails.libretro.com, which uses Redump / No-Intro names such as
     /// "Frame Gride (Japan)" or "Sonic Rivals (USA)".
     var thumbnailCandidates: [String] {

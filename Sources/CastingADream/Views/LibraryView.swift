@@ -174,11 +174,10 @@ struct SortMenu: View {
 
 struct CollectionButton: View {
     @State private var hovering = false
-    private let url = URL(string: "https://collection.stevan.co.rs")!
 
     var body: some View {
         Button {
-            NSWorkspace.shared.open(url)
+            NSWorkspace.shared.open(Collection.home)
         } label: {
             HStack(spacing: 7) {
                 Image(systemName: "square.stack.3d.up.fill")
