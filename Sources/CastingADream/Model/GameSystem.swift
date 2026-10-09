@@ -1,0 +1,72 @@
+import SwiftUI
+
+/// A console the launcher can play, and how to hand its games to the bundled emulator.
+enum GameSystem: String, CaseIterable, Identifiable, Codable {
+    case dreamcast
+    case psp
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .dreamcast: "Dreamcast"
+        case .psp: "PSP"
+        }
+    }
+
+    /// Games live in ~/Games/<folderName>.
+    var folderName: String { displayName }
+
+    /// Playable file types, most preferred first. When a game folder holds several, the first match wins
+    /// (e.g. a folder with both a .gdi and a .cue lists the game once).
+    var extensions: [String] {
+        switch self {
+        case .dreamcast: ["chd", "gdi", "cue", "cdi"]
+        case .psp: ["iso", "cso", "chd", "pbp"]
+        }
+    }
+
+    /// System folder name on thumbnails.libretro.com.
+    var thumbnailSystem: String {
+        switch self {
+        case .dreamcast: "Sega - Dreamcast"
+        case .psp: "Sony - PlayStation Portable"
+        }
+    }
+
+    /// The emulator app that plays this system, found by bundle identifier wherever it's installed.
+    var emulatorName: String {
+        switch self {
+        case .dreamcast: "Flycast"
+        case .psp: "PPSSPP"
+        }
+    }
+
+    var emulatorBundleID: String {
+        switch self {
+        case .dreamcast: "com.flyinghead.Flycast"
+        case .psp: "org.ppsspp.ppsspp"
+        }
+    }
+
+    var accent: Color {
+        switch self {
+        case .dreamcast: Theme.cyan
+        case .psp: Theme.magenta
+        }
+    }
+
+    /// Both emulators quit by themselves when the player exits the game from their menu,
+    /// which clears the launcher's "Playing" screen:
+    /// - Flycast quits on "Exit" whenever it was started with a game path.
+    /// - PPSSPP needs --pause-menu-exit to turn "Exit to menu" into "Exit".
+    func launchArguments(for game: URL, fullScreen: Bool) -> [String] {
+        switch self {
+        case .dreamcast:
+            // Transient config value, not written to emu.cfg.
+            ["-config", "window:fullscreen=\(fullScreen ? "yes" : "no")", game.path]
+        case .psp:
+            ["--pause-menu-exit", fullScreen ? "--fullscreen" : "--windowed", game.path]
+        }
+    }
+}
