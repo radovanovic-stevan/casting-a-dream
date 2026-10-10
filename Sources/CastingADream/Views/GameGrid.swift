@@ -81,6 +81,9 @@ struct GameCard: View {
 
             HStack(spacing: 5) {
                 SystemChip(system: game.system)
+                if let progress = model.trophies.progress(for: game) {
+                    TrophyBadge(game: game, progress: progress)
+                }
                 Spacer(minLength: 4)
                 CollectionLink(game: game)
             }
@@ -94,6 +97,9 @@ struct GameCard: View {
         .animation(.easeOut(duration: 0.15), value: highlighted)
         .contextMenu {
             Button("Play") { model.play(game) }
+            if model.trophies.trophySet(for: game) != nil {
+                Button("Trophies…") { model.trophySheetGame = game }
+            }
             Button("Open in My Collection") { NSWorkspace.shared.open(Collection.url(for: game)) }
             Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([game.url]) }
         }

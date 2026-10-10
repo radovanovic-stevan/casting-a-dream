@@ -20,6 +20,17 @@ struct LibraryView: View {
                     .transition(.opacity)
             }
         }
+        .overlay(alignment: .topTrailing) {
+            TrophyToast()
+                .padding(.top, 84)
+                .padding(.trailing, Theme.pagePadding)
+                .transition(.move(edge: .trailing).combined(with: .opacity))
+                .animation(.spring(duration: 0.4), value: model.trophies.announcements)
+        }
+        .sheet(item: $model.trophySheetGame) { game in
+            TrophiesView(game: game)
+                .environmentObject(model)
+        }
         .background(WindowConfigurator())
         .animation(.easeOut(duration: 0.2), value: model.launcher.running)
         .onAppear {
@@ -27,8 +38,10 @@ struct LibraryView: View {
             model.library.scan()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            // Picks up games added in Finder while the launcher was in the background.
+            // Picks up games added in Finder while the launcher was in the background,
+            // and trophies earned in games played outside the launcher.
             model.library.scan()
+            model.trophies.evaluate(model.library.games)
         }
         .onChange(of: model.searchFocusRequest) { searchFocused = true }
         .alert("Couldn't start the game", isPresented: errorShown) {

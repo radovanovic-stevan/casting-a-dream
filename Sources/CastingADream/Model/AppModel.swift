@@ -25,6 +25,7 @@ final class AppModel: ObservableObject {
     let library = Library()
     let launcher = EmulatorLauncher()
     let covers = CoverArtStore()
+    let trophies = TrophyStore()
 
     @Published var filter: SystemFilter = .all {
         didSet { keepSelectionVisible() }
@@ -41,6 +42,8 @@ final class AppModel: ObservableObject {
     @Published var selectedID: Game.ID?
     /// Bumped to move keyboard focus into the search field.
     @Published var searchFocusRequest = 0
+    /// Game whose trophy list is open.
+    @Published var trophySheetGame: Game?
 
     /// Set by the grid from its width, used for up/down navigation.
     var gridColumns = 1
@@ -53,9 +56,18 @@ final class AppModel: ObservableObject {
         launchFullScreen = defaults.object(forKey: "launchFullScreen") as? Bool ?? false
 
         // Views observe this model only, so pass on changes from the parts.
-        for publisher in [library.objectWillChange, launcher.objectWillChange] {
+        for publisher in [library.objectWillChange, launcher.objectWillChange, trophies.objectWillChange] {
             publisher.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &cancellables)
         }
+        // Match games to trophy sets and check their saves whenever the library changes,
+        // which also catches games played outside the launcher.
+        library.$games
+            .removeDuplicates()
+            .sink { [weak self] games in
+                guard let self else { return }
+                Task { await self.trophies.refresh(games) }
+            }
+            .store(in: &cancellables)
     }
 
     // MARK: - What the grid shows
@@ -124,7 +136,10 @@ final class AppModel: ObservableObject {
         selectedID = game.id
         launcher.launch(game, fullScreen: launchFullScreen,
                         onStarted: { [weak self] in self?.library.markPlayed(game) },
-                        onEnded: { [weak self] seconds in self?.library.addPlayTime(seconds, to: game) })
+                        onEnded: { [weak self] seconds in
+                            self?.library.addPlayTime(seconds, to: game)
+                            self?.trophies.evaluate([game])
+                        })
     }
 
     func playSelected() {

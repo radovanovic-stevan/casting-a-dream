@@ -32,6 +32,16 @@ The emulators are the regular, unmodified apps. They open as normal Mac apps wit
 - Quitting the launcher also quits the game it started.
 - Exiting the game from the emulator's own menu quits the emulator too: Flycast does this when it's started with a game, PPSSPP gets `--pause-menu-exit`, and Dolphin runs in batch mode (`-b`), which shows only the game window. Dolphin also gets `ConfirmStop=False` so quitting isn't held up by its "stop emulation?" prompt, and its first-run usage statistics question is skipped (reporting stays off). Mesen has no such mode: closing a game leaves Mesen open, so quit it (⌘Q) or use Stop Game to come back.
 
+## Trophies
+
+Secret trophies show as "Secret trophy" until earned. Games with a trophy set show a gold count on their card; clicking it (or **Trophies…** in the right-click menu) lists every trophy and when it was unlocked. Trophies are checked from the game's save file whenever its emulator closes, and when the launcher comes to the front (for games played outside it). New unlocks pop up in the top-right corner. Unlocks are stored in `~/Library/Application Support/Casting a Dream/trophies.json`.
+
+A trophy set is matched to a game by the SHA-1 of its file, so renaming the folder doesn't lose it. Sets so far:
+
+- **Destiny of an Emperor II** (English translation v1.12, SHA-1 `d02cc267e0b350b2dc84f087fbc04a778f976973`), 17 trophies: recruiting generals (specific ones and 10/30/60), first victory, party level 10/20/30, gold held (1,000/10,000/50,000) and one secret trophy. It reads Mesen's battery save (`~/Library/Application Support/Mesen2/Saves/<ROM name>.sav`): one status byte per general at `$6200 + id` (bit `0x40` set when he joins; the leader is left out of counts because a defeat sets his), experience at `$6028` and gold at `$602C` (3 bytes each, little endian), level at `$602B`. General ids come from the ROM's general table (pointer low bytes at ROM `$6DE00`, high bytes at `$6DF00`). The layout was worked out by playing the game headless in Mesen and comparing battery RAM before and after generals joined. See `Sources/CastingADream/Trophies/DestinyOfAnEmperorII.swift`.
+
+To add a game, implement `TrophySet` (how to find the save, which trophies the bytes earn) and add it to `TrophySets.all`.
+
 ## Controls
 
 | | Keyboard | Controller |
