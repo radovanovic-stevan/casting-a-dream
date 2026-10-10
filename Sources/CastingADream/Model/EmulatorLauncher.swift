@@ -1,6 +1,6 @@
 import AppKit
 
-/// Opens Flycast or PPSSPP with a game, as an ordinary app with its own window, Dock icon and menus,
+/// Opens a game in its system's emulator, as an ordinary app with its own window, Dock icon and menus,
 /// and keeps track of it until it quits.
 @MainActor
 final class EmulatorLauncher: ObservableObject {

@@ -59,7 +59,7 @@ struct NoMatchesView: View {
     }
 }
 
-/// Covers the library while a game runs in Flycast or PPSSPP.
+/// Covers the library while a game runs in its emulator.
 struct PlayingOverlay: View {
     let game: Game
     @EnvironmentObject private var model: AppModel

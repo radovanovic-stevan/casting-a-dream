@@ -223,7 +223,7 @@ struct FooterHints: View {
             hint("l1.rectangle.roundedbottom", "Switch system", alt: "R1")
             hint("command", "F  Search")
             Spacer()
-            Text("Games open in Flycast or PPSSPP. Quit there to come back here.")
+            Text("Games open in their own emulator. Quit it to come back here.")
                 .foregroundStyle(Theme.textSecondary.opacity(0.7))
         }
         .font(.system(size: 11, weight: .medium))
