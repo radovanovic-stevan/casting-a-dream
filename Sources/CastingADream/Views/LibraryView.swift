@@ -87,7 +87,7 @@ struct FilterPills: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            ForEach(SystemFilter.allCases, id: \.self) { filter in
+            ForEach(model.availableFilters, id: \.self) { filter in
                 let selected = model.filter == filter
                 Button {
                     model.filter = filter

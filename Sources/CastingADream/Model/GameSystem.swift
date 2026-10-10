@@ -1,9 +1,11 @@
 import SwiftUI
 
-/// A console the launcher can play, and how to hand its games to the bundled emulator.
+/// A console the launcher can play, and how to hand its games to its emulator.
 enum GameSystem: String, CaseIterable, Identifiable, Codable {
     case dreamcast
     case psp
+    case wii
+    case gamecube
 
     var id: String { rawValue }
 
@@ -11,6 +13,8 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .dreamcast: "Dreamcast"
         case .psp: "PSP"
+        case .wii: "Wii"
+        case .gamecube: "GameCube"
         }
     }
 
@@ -23,6 +27,8 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .dreamcast: ["chd", "gdi", "cue", "cdi"]
         case .psp: ["iso", "cso", "chd", "pbp"]
+        case .wii: ["rvz", "wbfs", "iso", "wia", "gcz", "ciso"]
+        case .gamecube: ["rvz", "iso", "gcm", "gcz", "ciso", "wia"]
         }
     }
 
@@ -31,6 +37,8 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .dreamcast: "Sega - Dreamcast"
         case .psp: "Sony - PlayStation Portable"
+        case .wii: "Nintendo - Wii"
+        case .gamecube: "Nintendo - GameCube"
         }
     }
 
@@ -39,6 +47,7 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .dreamcast: "Flycast"
         case .psp: "PPSSPP"
+        case .wii, .gamecube: "Dolphin"
         }
     }
 
@@ -46,6 +55,7 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .dreamcast: "com.flyinghead.Flycast"
         case .psp: "org.ppsspp.ppsspp"
+        case .wii, .gamecube: "org.dolphin-emu.dolphin"
         }
     }
 
@@ -53,13 +63,19 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .dreamcast: Theme.cyan
         case .psp: Theme.magenta
+        case .wii: Theme.ice
+        case .gamecube: Theme.violet
         }
     }
 
-    /// Both emulators quit by themselves when the player exits the game from their menu,
-    /// which clears the launcher's "Playing" screen:
+    /// Every emulator quits by itself when the player stops the game, which clears the
+    /// launcher's "Playing" screen:
     /// - Flycast quits on "Exit" whenever it was started with a game path.
     /// - PPSSPP needs --pause-menu-exit to turn "Exit to menu" into "Exit".
+    /// - Dolphin's batch mode (-b) shows only the game window and quits when emulation stops.
+    ///   Its "Do you want to stop?" prompt and first-run usage statistics question would block
+    ///   quitting (and Stop Game), so both are switched off. ConfirmStop applies to this launch only;
+    ///   Dolphin saves PermissionAsked, so it won't ask again. Reporting stays at its default, off.
     func launchArguments(for game: URL, fullScreen: Bool) -> [String] {
         switch self {
         case .dreamcast:
@@ -67,6 +83,12 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
             ["-config", "window:fullscreen=\(fullScreen ? "yes" : "no")", game.path]
         case .psp:
             ["--pause-menu-exit", fullScreen ? "--fullscreen" : "--windowed", game.path]
+        case .wii, .gamecube:
+            ["-b",
+             "-C", "Dolphin.Display.Fullscreen=\(fullScreen ? "True" : "False")",
+             "-C", "Dolphin.Interface.ConfirmStop=False",
+             "-C", "Dolphin.Analytics.PermissionAsked=True",
+             "-e", game.path]
         }
     }
 }

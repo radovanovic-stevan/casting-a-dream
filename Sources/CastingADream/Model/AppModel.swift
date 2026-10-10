@@ -105,6 +105,12 @@ final class AppModel: ObservableObject {
         return "\(text) played"
     }
 
+    /// "All" plus each system that has games, so empty systems don't crowd the header.
+    /// The current filter stays listed even if its last game is removed.
+    var availableFilters: [SystemFilter] {
+        SystemFilter.allCases.filter { $0 == .all || $0 == filter || count(for: $0) > 0 }
+    }
+
     func count(for filter: SystemFilter) -> Int {
         switch filter {
         case .all: library.games.count
@@ -142,7 +148,7 @@ final class AppModel: ObservableObject {
     }
 
     func cycleFilter(by step: Int) {
-        let filters = SystemFilter.allCases
+        let filters = availableFilters
         let index = filters.firstIndex(of: filter) ?? 0
         filter = filters[(index + step + filters.count) % filters.count]
     }

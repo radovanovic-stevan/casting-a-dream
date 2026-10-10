@@ -32,6 +32,8 @@ extension GameSystem {
         switch self {
         case .dreamcast: "Dreamcast"
         case .psp: "PSP"
+        case .wii: "Wii"
+        case .gamecube: "GCN"
         }
     }
 }
