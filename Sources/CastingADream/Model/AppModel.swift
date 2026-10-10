@@ -68,6 +68,20 @@ final class AppModel: ObservableObject {
                 Task { await self.trophies.refresh(games) }
             }
             .store(in: &cancellables)
+        // Keep the collection site's copy of the library, play time and trophies current.
+        Publishers.Merge3(library.$games.map { _ in () }, library.$stats.map { _ in () }, trophies.objectWillChange)
+            .debounce(for: .seconds(1), scheduler: RunLoop.main)
+            .sink { [weak self] in self?.exportToCollection() }
+            .store(in: &cancellables)
+    }
+
+    func exportToCollection() {
+        guard library.hasScanned else { return }
+        CollectionExport.write(games: library.games, stats: library.stats, trophies: trophies)
+    }
+
+    func chooseCollectionExportFolder() {
+        if CollectionExport.chooseFolder() { exportToCollection() }
     }
 
     // MARK: - What the grid shows

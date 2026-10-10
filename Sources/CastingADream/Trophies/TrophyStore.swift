@@ -15,7 +15,8 @@ final class TrophyStore: ObservableObject {
     /// Newly unlocked trophies, shown as a pop-up until dismissed.
     @Published var announcements: [TrophyUnlock] = []
 
-    private var setsByGame: [Game.ID: any TrophySet] = [:]
+    /// Published so the collection export sees games gain or lose a trophy set.
+    @Published private var setsByGame: [Game.ID: any TrophySet] = [:]
     /// SHA-1 per game file, keyed by path + modification date so unchanged files aren't hashed again.
     private var hashCache: [String: String] = [:]
 

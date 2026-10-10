@@ -28,6 +28,7 @@ struct CastingADreamApp: App {
                 }
                 Divider()
                 Toggle("Launch Games Full Screen", isOn: $model.launchFullScreen)
+                Button("Collection Export Folder…") { model.chooseCollectionExportFolder() }
             }
         }
     }

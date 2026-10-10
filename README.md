@@ -24,6 +24,8 @@ The emulators are the regular, unmodified apps. They open as normal Mac apps wit
 - Play history is kept in `~/Library/Application Support/Casting a Dream/stats.json`: when each game was last played and its total play time. A session runs from the emulator opening until it quits; time the Mac spends asleep doesn't count, and quitting the launcher mid-game still records the session. Each card shows the total; games played before tracking existed show "No time tracked yet" until their next session.
 - Each game has a violet button (also in its right-click menu) that opens it in [my collection](https://collection.stevan.co.rs). The collection has no per-game pages, so the link is a search for the title plus a platform filter, e.g. `?q=Sonic%20Rivals&platforms=PSP`. The title comes from the folder name without the bracketed parts. When that differs from the collection's title (a fan translation, a different romanization), put a `collection.txt` in the game's folder with the search to use instead, e.g. `Tenchi wo Kurau II`.
 
+- **Collection export:** with **Library → Collection Export Folder…** pointed at the collection site's `public/data`, the launcher keeps `casting-a-dream.json` there up to date: every game with its collection search, play time, last played date and trophies (secret ones without their name until earned). It's rewritten whenever the library, play time or trophies change, and only when something is different. The site's Casting a Dream tab lists it; publishing is a commit and push of the site.
+
 ## Playing
 
 - Double-click a game, press Return, or press A on a controller.
