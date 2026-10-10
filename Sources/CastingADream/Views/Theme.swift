@@ -13,6 +13,7 @@ enum Theme {
     static let violet = Color(hex: 0x7A5CFF)
     static let magenta = Color(hex: 0xFF2BD6)
     static let ice = Color(hex: 0x8FE3FF)
+    static let coral = Color(hex: 0xFF5A5F)
     /// Accent of collection.stevan.co.rs.
     static let collection = Color(hex: 0x5B4CF0)
     static let collectionHover = Color(hex: 0x6E60FF)

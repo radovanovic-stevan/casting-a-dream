@@ -6,6 +6,7 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
     case psp
     case wii
     case gamecube
+    case famicom
 
     var id: String { rawValue }
 
@@ -15,6 +16,7 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         case .psp: "PSP"
         case .wii: "Wii"
         case .gamecube: "GameCube"
+        case .famicom: "Famicom"
         }
     }
 
@@ -29,6 +31,7 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         case .psp: ["iso", "cso", "chd", "pbp"]
         case .wii: ["rvz", "wbfs", "iso", "wia", "gcz", "ciso"]
         case .gamecube: ["rvz", "iso", "gcm", "gcz", "ciso", "wia"]
+        case .famicom: ["nes", "fds", "unf", "unif"]
         }
     }
 
@@ -39,6 +42,7 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         case .psp: "Sony - PlayStation Portable"
         case .wii: "Nintendo - Wii"
         case .gamecube: "Nintendo - GameCube"
+        case .famicom: "Nintendo - Nintendo Entertainment System"
         }
     }
 
@@ -48,6 +52,7 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         case .dreamcast: "Flycast"
         case .psp: "PPSSPP"
         case .wii, .gamecube: "Dolphin"
+        case .famicom: "Mesen"
         }
     }
 
@@ -56,6 +61,7 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         case .dreamcast: "com.flyinghead.Flycast"
         case .psp: "org.ppsspp.ppsspp"
         case .wii, .gamecube: "org.dolphin-emu.dolphin"
+        case .famicom: "ca.mesen"
         }
     }
 
@@ -65,10 +71,11 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         case .psp: Theme.magenta
         case .wii: Theme.ice
         case .gamecube: Theme.violet
+        case .famicom: Theme.coral
         }
     }
 
-    /// Every emulator quits by itself when the player stops the game, which clears the
+    /// Every emulator but Mesen quits by itself when the player stops the game, which clears the
     /// launcher's "Playing" screen:
     /// - Flycast quits on "Exit" whenever it was started with a game path.
     /// - PPSSPP needs --pause-menu-exit to turn "Exit to menu" into "Exit".
@@ -76,6 +83,7 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
     ///   Its "Do you want to stop?" prompt and first-run usage statistics question would block
     ///   quitting (and Stop Game), so both are switched off. ConfirmStop applies to this launch only;
     ///   Dolphin saves PermissionAsked, so it won't ask again. Reporting stays at its default, off.
+    /// - Mesen has no such mode: closing the game leaves Mesen open, so the player quits it (or uses Stop Game).
     func launchArguments(for game: URL, fullScreen: Bool) -> [String] {
         switch self {
         case .dreamcast:
@@ -89,6 +97,8 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
              "-C", "Dolphin.Interface.ConfirmStop=False",
              "-C", "Dolphin.Analytics.PermissionAsked=True",
              "-e", game.path]
+        case .famicom:
+            (fullScreen ? ["--fullscreen"] : []) + [game.path]
         }
     }
 }

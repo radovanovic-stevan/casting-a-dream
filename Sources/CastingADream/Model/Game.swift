@@ -8,6 +8,8 @@ struct Game: Identifiable, Hashable {
     let folder: URL?
     /// Folder name, or file name without extension for loose files, e.g. "Frame Gride (English)".
     let name: String
+    /// Search for this game on the collection site, from collection.txt in its folder; nil means the title.
+    var collectionQuery: String? = nil
 
     var id: String { url.path }
 

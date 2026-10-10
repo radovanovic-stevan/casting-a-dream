@@ -70,7 +70,8 @@ final class Library: ObservableObject {
                 let files = (try? fm.contentsOfDirectory(at: item, includingPropertiesForKeys: nil,
                                                          options: [.skipsHiddenFiles])) ?? []
                 if let best = bestGameFile(in: files, for: system) {
-                    games.append(Game(system: system, url: best, folder: item, name: item.lastPathComponent))
+                    games.append(Game(system: system, url: best, folder: item, name: item.lastPathComponent,
+                                      collectionQuery: collectionQuery(in: item)))
                 }
             } else if system.extensions.contains(item.pathExtension.lowercased()) {
                 games.append(Game(system: system, url: item, folder: nil,
@@ -78,6 +79,16 @@ final class Library: ObservableObject {
             }
         }
         return games.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
+    /// First non-empty line of collection.txt in the game's folder, if there is one.
+    nonisolated private static func collectionQuery(in folder: URL) -> String? {
+        guard let text = try? String(contentsOf: folder.appendingPathComponent("collection.txt"), encoding: .utf8) else {
+            return nil
+        }
+        return text.split(whereSeparator: \.isNewline)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .first { !$0.isEmpty }
     }
 
     nonisolated private static func bestGameFile(in files: [URL], for system: GameSystem) -> URL? {
