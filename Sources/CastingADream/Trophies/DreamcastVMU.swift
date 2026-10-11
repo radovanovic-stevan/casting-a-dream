@@ -25,31 +25,36 @@ enum DreamcastVMU {
 
     /// Contents of the named file (whole blocks), or nil if it isn't on the VMU.
     static func file(named name: String, in image: Data) -> Data? {
+        files(in: image).first { $0.name == name }?.data
+    }
+
+    /// Every file on the VMU with its contents (whole blocks); empty if the image isn't a VMU.
+    static func files(in image: Data) -> [(name: String, data: Data)] {
         let bytes = [UInt8](image)
-        guard bytes.count == 256 * blockSize else { return nil }
+        guard bytes.count == 256 * blockSize else { return [] }
         func u16(_ offset: Int) -> Int { Int(bytes[offset]) | Int(bytes[offset + 1]) << 8 }
         let root = 255 * blockSize
         let fat = u16(root + 0x46) * blockSize
         let directory = u16(root + 0x4A)
         let directoryBlocks = u16(root + 0x4C)
-        guard fat < bytes.count, directory < 256, directoryBlocks <= directory + 1 else { return nil }
+        guard fat < bytes.count, directory < 256, directoryBlocks <= directory + 1 else { return [] }
 
+        var files: [(name: String, data: Data)] = []
         for block in stride(from: directory, to: directory - directoryBlocks, by: -1) {
-            for entry in stride(from: block * blockSize, to: (block + 1) * blockSize, by: 32) {
+            entries: for entry in stride(from: block * blockSize, to: (block + 1) * blockSize, by: 32) {
                 guard bytes[entry] == 0x33 || bytes[entry] == 0xCC else { continue }
-                let fileName = String(decoding: bytes[(entry + 4)..<(entry + 16)], as: UTF8.self)
+                let name = String(decoding: bytes[(entry + 4)..<(entry + 16)], as: UTF8.self)
                     .trimmingCharacters(in: CharacterSet(charactersIn: " \0"))
-                guard fileName == name else { continue }
                 var data = Data()
                 var next = u16(entry + 2)
                 for _ in 0..<u16(entry + 0x18) {
-                    guard next < 256 else { return nil }
+                    guard next < 256 else { continue entries }
                     data.append(contentsOf: bytes[(next * blockSize)..<((next + 1) * blockSize)])
                     next = u16(fat + next * 2)
                 }
-                return data
+                files.append((name, data))
             }
         }
-        return nil
+        return files
     }
 }

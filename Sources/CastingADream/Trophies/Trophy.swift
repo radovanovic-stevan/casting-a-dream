@@ -25,7 +25,7 @@ protocol TrophySet {
 }
 
 enum TrophySets {
-    static let all: [any TrophySet] = [DestinyOfAnEmperorIITrophies(), PsychicForce2012Trophies()]
+    static let all: [any TrophySet] = [DestinyOfAnEmperorIITrophies(), PsychicForce2012Trophies(), FrameGrideTrophies()]
     static let systems = Set(all.map(\.system))
 }
 
