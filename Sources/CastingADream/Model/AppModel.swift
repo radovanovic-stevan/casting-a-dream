@@ -86,7 +86,13 @@ final class AppModel: ObservableObject {
 
     // MARK: - What the grid shows
 
+    /// Regular games first, then homebrew, each in the chosen order. The grid shows them as two sections.
     var visibleGames: [Game] {
+        let sections = visibleSections
+        return sections.regular + sections.homebrew
+    }
+
+    var visibleSections: (regular: [Game], homebrew: [Game]) {
         var games = library.games
         if case .system(let system) = filter {
             games = games.filter { $0.system == system }
@@ -95,6 +101,11 @@ final class AppModel: ObservableObject {
         if !query.isEmpty {
             games = games.filter { $0.name.localizedCaseInsensitiveContains(query) }
         }
+        let ordered = inSortOrder(games)
+        return (ordered.filter { !$0.isHomebrew }, ordered.filter(\.isHomebrew))
+    }
+
+    private func inSortOrder(_ games: [Game]) -> [Game] {
         switch sort {
         case .title:
             return games.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
@@ -164,7 +175,9 @@ final class AppModel: ObservableObject {
         play(game)
     }
 
-    /// Arrow keys / D-pad: dx moves within a row, dy moves a whole row.
+    /// Arrow keys / D-pad: dx steps through the games in order, dy moves a whole row.
+    /// The homebrew section starts on a new row, so rows are counted per section: down from the
+    /// last regular row lands in the first homebrew row, keeping the column where it can.
     func moveSelection(dx: Int, dy: Int) {
         let games = visibleGames
         guard !games.isEmpty else { return }
@@ -172,8 +185,26 @@ final class AppModel: ObservableObject {
             selectedID = games[0].id
             return
         }
-        let target = index + dx + dy * max(gridColumns, 1)
-        selectedID = games[min(max(target, 0), games.count - 1)].id
+        if dy == 0 {
+            selectedID = games[min(max(index + dx, 0), games.count - 1)].id
+            return
+        }
+        let columns = max(gridColumns, 1)
+        let sections = visibleSections
+        let rows = [sections.regular, sections.homebrew].flatMap { section in
+            stride(from: 0, to: section.count, by: columns).map { Array(section[$0..<min($0 + columns, section.count)]) }
+        }
+        guard let row = rows.firstIndex(where: { $0.contains { $0.id == id } }),
+              let column = rows[row].firstIndex(where: { $0.id == id }) else { return }
+        let target = row + dy
+        // Past the top or bottom: the first or last game, as before.
+        if target < 0 {
+            selectedID = games[0].id
+        } else if target >= rows.count {
+            selectedID = games[games.count - 1].id
+        } else {
+            selectedID = rows[target][min(column, rows[target].count - 1)].id
+        }
     }
 
     func cycleFilter(by step: Int) {

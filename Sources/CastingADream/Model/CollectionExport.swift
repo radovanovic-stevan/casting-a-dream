@@ -2,6 +2,7 @@ import AppKit
 
 /// Writes casting-a-dream.json for the collection site: every game in the library with its play time and
 /// trophies, so the site can list them and show the launcher's play time on the matching collection games.
+/// Homebrew games are left out: the file is published, and they aren't part of the collection.
 ///
 /// It's written to the folder chosen with Library → Collection Export Folder… (the site's public/data),
 /// whenever the library, play time or trophies change, and only when the content is different, so the
@@ -37,6 +38,7 @@ enum CollectionExport {
                 .init(name: $0.displayName, platform: $0.collectionPlatform, emulator: $0.emulatorName)
             },
             games: games
+                .filter { !$0.isHomebrew }
                 .sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
                 .map { entry(for: $0, stats: stats[$0.id], trophies: trophies) }
         )

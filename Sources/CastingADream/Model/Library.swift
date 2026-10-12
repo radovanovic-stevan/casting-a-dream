@@ -59,6 +59,7 @@ final class Library: ObservableObject {
     // MARK: - Scanning
 
     /// One game per subfolder (its best playable file), plus playable files loose in the system folder.
+    /// A homebrew.txt in a game's folder marks it as homebrew; its contents don't matter. Loose files never are.
     nonisolated static func scan(system: GameSystem, in root: URL) -> [Game] {
         let fm = FileManager.default
         guard let items = try? fm.contentsOfDirectory(at: root, includingPropertiesForKeys: [.isDirectoryKey],
@@ -71,7 +72,8 @@ final class Library: ObservableObject {
                                                          options: [.skipsHiddenFiles])) ?? []
                 if let best = bestGameFile(in: files, for: system) {
                     games.append(Game(system: system, url: best, folder: item, name: item.lastPathComponent,
-                                      collectionQuery: collectionQuery(in: item)))
+                                      collectionQuery: collectionQuery(in: item),
+                                      isHomebrew: fm.fileExists(atPath: item.appendingPathComponent("homebrew.txt").path)))
                 }
             } else if system.extensions.contains(item.pathExtension.lowercased()) {
                 games.append(Game(system: system, url: item, folder: nil,

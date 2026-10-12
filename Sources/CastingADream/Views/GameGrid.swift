@@ -10,16 +10,19 @@ struct GameGrid: View {
 
             ScrollViewReader { proxy in
                 ScrollView {
+                    let sections = model.visibleSections
                     VStack(alignment: .leading, spacing: 30) {
                         if let hero = model.heroGame {
                             HeroBanner(game: hero)
                         }
-                        LazyVGrid(columns: Array(repeating: GridItem(.fixed(Theme.cardWidth), spacing: Theme.cardSpacing, alignment: .top),
-                                                 count: columns),
-                                  alignment: .leading, spacing: 28) {
-                            ForEach(model.visibleGames) { game in
-                                GameCard(game: game, isSelected: model.selectedID == game.id)
-                                    .id(game.id)
+                        if !sections.regular.isEmpty {
+                            grid(sections.regular, columns: columns)
+                        }
+                        // Homebrew starts on a row of its own under a header; moveSelection counts rows the same way.
+                        if !sections.homebrew.isEmpty {
+                            VStack(alignment: .leading, spacing: 16) {
+                                HomebrewHeader(count: sections.homebrew.count)
+                                grid(sections.homebrew, columns: columns)
                             }
                         }
                     }
@@ -35,6 +38,66 @@ struct GameGrid: View {
             }
             .onAppear { model.gridColumns = columns }
             .onChange(of: columns) { _, value in model.gridColumns = value }
+        }
+    }
+
+    private func grid(_ games: [Game], columns: Int) -> some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.fixed(Theme.cardWidth), spacing: Theme.cardSpacing, alignment: .top),
+                                 count: columns),
+                  alignment: .leading, spacing: 28) {
+            ForEach(games) { game in
+                GameCard(game: game, isSelected: model.selectedID == game.id)
+                    .id(game.id)
+            }
+        }
+    }
+}
+
+/// Divider above the homebrew games: label in the "Continue playing" style, then a hairline to the edge.
+struct HomebrewHeader: View {
+    let count: Int
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Label("HOMEBREW", systemImage: "hammer.fill")
+                .font(.system(size: 11, weight: .heavy, design: .rounded))
+                .tracking(1.6)
+                .foregroundStyle(Theme.neon)
+            Text("\(count)")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Theme.textSecondary.opacity(0.7))
+                .monospacedDigit()
+            Rectangle()
+                .fill(Theme.hairline)
+                .frame(height: 1)
+        }
+        .padding(.top, 4)
+        .help("My own ROM hacks, marked by a homebrew.txt in their folder. They're not in My Collection.")
+    }
+}
+
+/// Corner tag on a homebrew game's cover, so it stands out in search results and "All" too.
+struct HomebrewBadge: View {
+    var body: some View {
+        Label("HOMEBREW", systemImage: "hammer.fill")
+            .labelStyle(BadgeLabelStyle())
+            .font(.system(size: 9, weight: .bold, design: .rounded))
+            .tracking(0.6)
+            .foregroundStyle(Theme.magenta)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(.black.opacity(0.7), in: Capsule())
+            .overlay(Capsule().strokeBorder(Theme.magenta.opacity(0.5), lineWidth: 0.5))
+            .fixedSize()
+            .help("Homebrew")
+    }
+
+    private struct BadgeLabelStyle: LabelStyle {
+        func makeBody(configuration: Configuration) -> some View {
+            HStack(spacing: 3) {
+                configuration.icon
+                configuration.title
+            }
         }
     }
 }
@@ -57,6 +120,11 @@ struct GameCard: View {
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .strokeBorder(highlighted ? AnyShapeStyle(Theme.neon) : AnyShapeStyle(Theme.hairline),
                                       lineWidth: highlighted ? 2 : 1)
+                }
+                .overlay(alignment: .topLeading) {
+                    if game.isHomebrew {
+                        HomebrewBadge().padding(7)
+                    }
                 }
                 .overlay {
                     if hovering {
@@ -85,7 +153,10 @@ struct GameCard: View {
                     TrophyBadge(game: game, progress: progress)
                 }
                 Spacer(minLength: 4)
-                CollectionLink(game: game)
+                // Homebrew isn't in the collection, so there's nothing to link to.
+                if !game.isHomebrew {
+                    CollectionLink(game: game)
+                }
             }
         }
         .frame(width: Theme.cardWidth, alignment: .leading)
@@ -100,7 +171,9 @@ struct GameCard: View {
             if model.trophies.trophySet(for: game) != nil {
                 Button("Trophies…") { model.trophySheetGame = game }
             }
-            Button("Open in My Collection") { NSWorkspace.shared.open(Collection.url(for: game)) }
+            if !game.isHomebrew {
+                Button("Open in My Collection") { NSWorkspace.shared.open(Collection.url(for: game)) }
+            }
             Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([game.url]) }
         }
         .help(game.name)

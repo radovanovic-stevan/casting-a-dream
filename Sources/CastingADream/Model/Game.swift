@@ -10,6 +10,9 @@ struct Game: Identifiable, Hashable {
     let name: String
     /// Search for this game on the collection site, from collection.txt in its folder; nil means the title.
     var collectionQuery: String? = nil
+    /// One of my own ROM hacks, marked by a homebrew.txt in its folder. Listed in its own section
+    /// and kept out of the collection site, which only has games I own.
+    var isHomebrew = false
 
     var id: String { url.path }
 
