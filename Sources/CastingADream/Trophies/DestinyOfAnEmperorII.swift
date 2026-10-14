@@ -4,9 +4,11 @@ import Foundation
 ///
 /// Save layout, worked out by playing the game headless in Mesen and comparing battery RAM:
 /// - Battery RAM is 8 KB at $6000; the game keeps its live state at $6000–$64FF.
-/// - $6200 + general id holds one status byte per general; bit 0x40 is set when he joins your army
-///   (seen for Zhu Ling, Lu Zhao, Guan Yu and Zhang Fei as they joined). Liu Bei, the leader, only gets
-///   it after a defeat sends the party back, so he's left out of recruit counts.
+/// - $6200 + general id holds one status byte per general. Bit 0x40 is set while he's in the active
+///   party (seen for Zhu Ling, Lu Zhao, Guan Yu and Zhang Fei as they joined); moving him to the reserve
+///   clears it and sets bit 0x01 instead (Zhu Ling and Lu Zhao later read 0x01, alongside ten other
+///   recruits, with exactly six generals at 0xC0). Either bit means he's in your army. Liu Bei, the
+///   leader, only gets 0x40 after a defeat sends the party back, so he's left out of recruit counts.
 /// - $6028–$602A: experience (3 bytes, little endian); only victories add to it.
 /// - $602B: party level (the level-up routine increments it and then shows its message).
 /// - $602C–$602E: gold (3 bytes, little endian; the game caps it at 9,999,999).
@@ -37,7 +39,8 @@ struct DestinyOfAnEmperorIITrophies: TrophySet {
     }
 
     private static let statusBase = 0x200   // $6200 within battery RAM
-    private static let joinedBit: UInt8 = 0x40
+    /// 0x40 in the active party, 0x01 in the reserve.
+    private static let joinedBits: UInt8 = 0x41
     private static let experience = 0x028   // $6028
     private static let level = 0x02B        // $602B
     private static let gold = 0x02C         // $602C
@@ -88,12 +91,12 @@ struct DestinyOfAnEmperorIITrophies: TrophySet {
         let bytes = [UInt8](save)
         guard bytes.count >= Self.statusBase + 0x100 else { return [] }
         func joined(_ ids: [Int]) -> Bool {
-            ids.contains { bytes[Self.statusBase + $0] & Self.joinedBit != 0 }
+            ids.contains { bytes[Self.statusBase + $0] & Self.joinedBits != 0 }
         }
         func number(at offset: Int) -> Int {
             Int(bytes[offset]) | Int(bytes[offset + 1]) << 8 | Int(bytes[offset + 2]) << 16
         }
-        let recruited = (0..<0x100).filter { $0 != General.liuBei && bytes[Self.statusBase + $0] & Self.joinedBit != 0 }.count
+        let recruited = (0..<0x100).filter { $0 != General.liuBei && bytes[Self.statusBase + $0] & Self.joinedBits != 0 }.count
         let experience = number(at: Self.experience)
         let level = Int(bytes[Self.level])
         let gold = number(at: Self.gold)
