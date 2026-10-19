@@ -76,32 +76,6 @@ struct HomebrewHeader: View {
     }
 }
 
-/// Corner tag on a homebrew game's cover, so it stands out in search results and "All" too.
-struct HomebrewBadge: View {
-    var body: some View {
-        Label("HOMEBREW", systemImage: "hammer.fill")
-            .labelStyle(BadgeLabelStyle())
-            .font(.system(size: 9, weight: .bold, design: .rounded))
-            .tracking(0.6)
-            .foregroundStyle(Theme.magenta)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 3)
-            .background(.black.opacity(0.7), in: Capsule())
-            .overlay(Capsule().strokeBorder(Theme.magenta.opacity(0.5), lineWidth: 0.5))
-            .fixedSize()
-            .help("Homebrew")
-    }
-
-    private struct BadgeLabelStyle: LabelStyle {
-        func makeBody(configuration: Configuration) -> some View {
-            HStack(spacing: 3) {
-                configuration.icon
-                configuration.title
-            }
-        }
-    }
-}
-
 struct GameCard: View {
     let game: Game
     let isSelected: Bool
@@ -120,11 +94,6 @@ struct GameCard: View {
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .strokeBorder(highlighted ? AnyShapeStyle(Theme.neon) : AnyShapeStyle(Theme.hairline),
                                       lineWidth: highlighted ? 2 : 1)
-                }
-                .overlay(alignment: .topLeading) {
-                    if game.isHomebrew {
-                        HomebrewBadge().padding(7)
-                    }
                 }
                 .overlay {
                     if hovering {
