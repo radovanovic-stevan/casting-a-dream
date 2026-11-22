@@ -9,6 +9,8 @@ import Foundation
 ///   clears it and sets bit 0x01 instead (Zhu Ling and Lu Zhao later read 0x01, alongside ten other
 ///   recruits, with exactly six generals at 0xC0). Either bit means he's in your army. Liu Bei, the
 ///   leader, only gets 0x40 after a defeat sends the party back, so he's left out of recruit counts.
+///   Generals who die in the story lose both bits (Guan Yu and Zhang Fei read 0x80, Pang Tong 0x00), so
+///   the count is the army as it stands; a save 90% through the game has 25, hence tiers of 10 and 20.
 /// - $6028–$602A: experience (3 bytes, little endian); only victories add to it.
 /// - $602B: party level (the level-up routine increments it and then shows its message).
 /// - $602C–$602E: gold (3 bytes, little endian; the game caps it at 9,999,999).
@@ -63,7 +65,7 @@ struct DestinyOfAnEmperorIITrophies: TrophySet {
         Trophy(id: "phoenix", title: "Phoenix Fledgling",
                detail: "Recruit Pang Tong.", symbol: "bird.fill"),
         Trophy(id: "grand-army", title: "Grand Army",
-               detail: "Recruit 30 generals.", symbol: "flag.2.crossed.fill"),
+               detail: "Recruit 20 generals.", symbol: "flag.2.crossed.fill"),
         Trophy(id: "veteran", title: "Veteran Commander",
                detail: "Reach level 20.", symbol: "chevron.up.2"),
         Trophy(id: "imperial-treasury", title: "Imperial Treasury",
@@ -72,8 +74,6 @@ struct DestinyOfAnEmperorIITrophies: TrophySet {
                detail: "Command Guan Yu, Zhang Fei, Zhao Yun, Ma Chao and Huang Zhong.", symbol: "crown.fill"),
         Trophy(id: "heir", title: "Heir to the Strategist",
                detail: "Recruit Jiang Wei.", symbol: "scroll.fill"),
-        Trophy(id: "legendary-army", title: "Legendary Army",
-               detail: "Recruit 60 generals.", symbol: "star.circle.fill"),
         Trophy(id: "master-of-war", title: "Master of War",
                detail: "Reach level 30.", symbol: "chevron.up.chevron.down"),
         Trophy(id: "fortune", title: "Fortune of Kingdoms",
@@ -112,8 +112,7 @@ struct DestinyOfAnEmperorIITrophies: TrophySet {
         if joined(General.zhangLu) { earned.insert("yi-ji") }
         if recruited >= 1 { earned.insert("first-recruits") }
         if recruited >= 10 { earned.insert("growing-army") }
-        if recruited >= 30 { earned.insert("grand-army") }
-        if recruited >= 60 { earned.insert("legendary-army") }
+        if recruited >= 20 { earned.insert("grand-army") }
         if joined(General.guanYu), joined(General.zhangFei) { earned.insert("peach-garden") }
         if joined(General.zhugeLiang) { earned.insert("sleeping-dragon") }
         if joined(General.pangTong) { earned.insert("phoenix") }
