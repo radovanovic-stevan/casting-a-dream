@@ -7,6 +7,7 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
     case wii
     case gamecube
     case famicom
+    case ps2
 
     var id: String { rawValue }
 
@@ -17,6 +18,7 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         case .wii: "Wii"
         case .gamecube: "GameCube"
         case .famicom: "Famicom"
+        case .ps2: "PS2"
         }
     }
 
@@ -32,6 +34,7 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         case .wii: ["rvz", "wbfs", "iso", "wia", "gcz", "ciso"]
         case .gamecube: ["rvz", "iso", "gcm", "gcz", "ciso", "wia"]
         case .famicom: ["nes", "fds", "unf", "unif"]
+        case .ps2: ["chd", "iso", "cso", "cue", "bin"]
         }
     }
 
@@ -43,6 +46,7 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         case .wii: "Nintendo - Wii"
         case .gamecube: "Nintendo - GameCube"
         case .famicom: "Nintendo - Nintendo Entertainment System"
+        case .ps2: "Sony - PlayStation 2"
         }
     }
 
@@ -53,6 +57,7 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         case .psp: "PPSSPP"
         case .wii, .gamecube: "Dolphin"
         case .famicom: "Mesen"
+        case .ps2: "PCSX2"
         }
     }
 
@@ -62,6 +67,7 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         case .psp: "org.ppsspp.ppsspp"
         case .wii, .gamecube: "org.dolphin-emu.dolphin"
         case .famicom: "ca.mesen"
+        case .ps2: "net.pcsx2.pcsx2"
         }
     }
 
@@ -72,6 +78,7 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
         case .wii: Theme.ice
         case .gamecube: Theme.violet
         case .famicom: Theme.coral
+        case .ps2: Theme.cobalt
         }
     }
 
@@ -83,6 +90,8 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
     ///   Its "Do you want to stop?" prompt and first-run usage statistics question would block
     ///   quitting (and Stop Game), so both are switched off. ConfirmStop applies to this launch only;
     ///   Dolphin saves PermissionAsked, so it won't ask again. Reporting stays at its default, off.
+    /// - PCSX2's -nogui hides its main window, so only the game window shows, and implies batch mode,
+    ///   which quits PCSX2 when the game shuts down.
     /// - Mesen has no such mode: closing the game leaves Mesen open, so the player quits it (or uses Stop Game).
     func launchArguments(for game: URL, fullScreen: Bool) -> [String] {
         switch self {
@@ -99,6 +108,8 @@ enum GameSystem: String, CaseIterable, Identifiable, Codable {
              "-e", game.path]
         case .famicom:
             (fullScreen ? ["--fullscreen"] : []) + [game.path]
+        case .ps2:
+            ["-nogui", fullScreen ? "-fullscreen" : "-nofullscreen", "--", game.path]
         }
     }
 }

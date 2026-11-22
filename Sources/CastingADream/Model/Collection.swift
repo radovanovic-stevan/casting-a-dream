@@ -37,6 +37,7 @@ extension GameSystem {
         case .wii: "Wii"
         case .gamecube: "GCN"
         case .famicom: "Famicom"
+        case .ps2: "PS2"
         }
     }
 }
